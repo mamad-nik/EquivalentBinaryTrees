@@ -15,15 +15,18 @@ type counter struct {
 func Walk(t *tree.Tree, ch, quit chan int, c *counter, wg *sync.WaitGroup) {
 	if t != nil {
 		c.mu.Lock()
-		defer c.mu.Unlock()
-		defer wg.Done()
 		fmt.Printf("out: c.c: %v & ", c.c)
-		if c.c--; c.c == 0 {
+		if c.c == 0 {
+			c.mu.Unlock()
 			fmt.Printf("in: c.c: %v\n", c.c)
 			quit <- 1
 			close(ch)
+			wg.Done()
 			return
 		}
+		c.c--
+
+		c.mu.Unlock()
 
 		select {
 		case <-quit:
@@ -31,11 +34,13 @@ func Walk(t *tree.Tree, ch, quit chan int, c *counter, wg *sync.WaitGroup) {
 			return
 		case ch <- t.Value:
 			fmt.Printf("t.Value: %v\n", t.Value)
+			wg.Add(2)
 			go Walk(t.Left, ch, quit, c, wg)
 			go Walk(t.Right, ch, quit, c, wg)
 		}
 	}
 
+	wg.Done()
 }
 
 func Same(t1 *tree.Tree) {
@@ -43,7 +48,7 @@ func Same(t1 *tree.Tree) {
 	quit := make(chan int)
 	c := &counter{c: 10}
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(1)
 	go Walk(t1, ch, quit, c, &wg)
 	go func() {
 		defer wg.Done()
