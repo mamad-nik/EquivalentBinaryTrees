@@ -14,12 +14,11 @@ type counter struct {
 	c  int
 }
 
-func Walk(t *tree.Tree, ch, quit chan int, c *counter, wg *sync.WaitGroup) {
+func Walk(t *tree.Tree, ch chan int, c *counter, wg *sync.WaitGroup) {
 	if t != nil {
 		c.mu.Lock()
 		if c.c == 0 {
 			c.mu.Unlock()
-			quit <- 1
 			close(ch)
 			wg.Done()
 			return
@@ -28,14 +27,11 @@ func Walk(t *tree.Tree, ch, quit chan int, c *counter, wg *sync.WaitGroup) {
 
 		c.mu.Unlock()
 
-		select {
-		case <-quit:
-			return
-		case ch <- t.Value:
-			wg.Add(2)
-			go Walk(t.Left, ch, quit, c, wg)
-			go Walk(t.Right, ch, quit, c, wg)
-		}
+		ch <- t.Value
+		wg.Add(2)
+		go Walk(t.Left, ch, c, wg)
+		go Walk(t.Right, ch, c, wg)
+
 	}
 
 	wg.Done()
@@ -43,11 +39,10 @@ func Walk(t *tree.Tree, ch, quit chan int, c *counter, wg *sync.WaitGroup) {
 
 func array(t *tree.Tree, a *[]int, w *sync.WaitGroup) {
 	ch := make(chan int, 10)
-	quit := make(chan int)
 	c := &counter{c: 10}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go Walk(t, ch, quit, c, &wg)
+	go Walk(t, ch, c, &wg)
 	go func() {
 		defer wg.Done()
 		for i := range ch {
