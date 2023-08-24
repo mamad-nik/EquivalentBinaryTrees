@@ -47,8 +47,6 @@ func Same(t1, t2 *tree.Tree) bool {
 	sort.Ints(a)
 	sort.Ints(b)
 
-	fmt.Printf("a: %v\n", a)
-	fmt.Printf("b: %v\n", b)
 	return slices.Equal(a, b)
 }
 
@@ -57,9 +55,8 @@ func main() {
 	t2 := tree.New(1)
 
 	fmt.Printf("Same(t1, t2): %v\n", Same(t1, t2))
-	t3 := tree.New(1)
-	t4 := tree.New(2)
+	t3 := tree.New(2)
 
-	fmt.Printf("Same(t1, t2): %v\n", Same(t3, t4))
+	fmt.Printf("Same(t1, t2): %v\n", Same(t2, t3))
 
 }
