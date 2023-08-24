@@ -9,28 +9,12 @@ import (
 	"golang.org/x/tour/tree"
 )
 
-type counter struct {
-	mu sync.Mutex
-	c  int
-}
-
-func Walk(t *tree.Tree, ch chan int, c *counter, wg *sync.WaitGroup) {
+func Walk(t *tree.Tree, ch chan int, wg *sync.WaitGroup) {
 	if t != nil {
-		c.mu.Lock()
-		if c.c == 0 {
-			c.mu.Unlock()
-			close(ch)
-			wg.Done()
-			return
-		}
-		c.c--
-
-		c.mu.Unlock()
-
 		ch <- t.Value
 		wg.Add(2)
-		go Walk(t.Left, ch, c, wg)
-		go Walk(t.Right, ch, c, wg)
+		go Walk(t.Left, ch, wg)
+		go Walk(t.Right, ch, wg)
 
 	}
 
@@ -39,10 +23,9 @@ func Walk(t *tree.Tree, ch chan int, c *counter, wg *sync.WaitGroup) {
 
 func array(t *tree.Tree, a *[]int, w *sync.WaitGroup) {
 	ch := make(chan int, 10)
-	c := &counter{c: 10}
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go Walk(t, ch, c, &wg)
+	go Walk(t, ch, &wg)
 	go func() {
 		defer wg.Done()
 		for i := range ch {
@@ -64,6 +47,8 @@ func Same(t1, t2 *tree.Tree) bool {
 	sort.Ints(a)
 	sort.Ints(b)
 
+	fmt.Printf("a: %v\n", a)
+	fmt.Printf("b: %v\n", b)
 	return slices.Equal(a, b)
 }
 
