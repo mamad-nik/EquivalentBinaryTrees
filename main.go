@@ -34,18 +34,19 @@ func array(t *tree.Tree, a *[]int, w *sync.WaitGroup) {
 		}
 	}()
 	wg.Wait()
+	sort.Ints(*a)
+
 	w.Done()
 
 }
 func Same(t1, t2 *tree.Tree) bool {
 	var a, b []int
 	var wg sync.WaitGroup
+
 	wg.Add(2)
 	go array(t1, &a, &wg)
 	go array(t2, &b, &wg)
 	wg.Wait()
-	sort.Ints(a)
-	sort.Ints(b)
 
 	return slices.Equal(a, b)
 }
